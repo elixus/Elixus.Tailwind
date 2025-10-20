@@ -2,6 +2,8 @@ using BlazorExample.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddTailwindWatcher(autoDetect: true);
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();

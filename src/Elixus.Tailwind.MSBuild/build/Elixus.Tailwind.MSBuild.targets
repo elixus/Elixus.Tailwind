@@ -17,7 +17,7 @@
 
   <!-- Define a custom item type for files to process -->
   <ItemGroup>
-    <AvailableItemName Include="TailwindFile" />
+    <AvailableItemName Include="TailwindInput" />
   </ItemGroup>
 
   <!-- Default properties -->
@@ -97,19 +97,19 @@
   <!-- Target that runs before build to process TailwindFile items -->
   <Target Name="ProcessTailwindFiles"
           BeforeTargets="BeforeBuild"
-          Inputs="@(TailwindFile)"
-          Outputs="%(TailwindFile.Identity).processed"
+          Inputs="@(TailwindInput)"
+          Outputs="%(TailwindInput.Identity).processed"
           DependsOnTargets="DownloadTailwindCli"
           Condition="'$(TailwindBlazorAssemblyPath)' != '' AND Exists('$(TailwindBlazorAssemblyPath)')">
 
 
     <!-- Use item metadata OutputDir if specified, otherwise default to wwwroot -->
     <PropertyGroup>
-      <_TailwindOutputDir>%(TailwindFile.OutputDir)</_TailwindOutputDir>
+      <_TailwindOutputDir>%(TailwindInput.OutputDir)</_TailwindOutputDir>
       <_TailwindOutputDir Condition="'$(_TailwindOutputDir)' == ''">wwwroot</_TailwindOutputDir>
     </PropertyGroup>
 
-    <ProcessTailwindFileTask InputFile="%(TailwindFile.Identity)"
+    <ProcessTailwindFileTask InputFile="%(TailwindInput.Identity)"
                      OutputDirectory="$(MSBuildProjectDirectory)\$(_TailwindOutputDir)"
                      ProjectDirectory="$(MSBuildProjectDirectory)"
                      TailwindCliPath="$(TailwindCliPath)" />

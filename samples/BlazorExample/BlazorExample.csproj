@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\Elixus.Tailwind\Elixus.Tailwind.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <TailwindFile Include="Styles\app.css" />
+    </ItemGroup>
+
+    <!-- Import targets file for local development -->
+    <Import Project="..\..\src\Elixus.Tailwind.MSBuild\build\Elixus.Tailwind.MSBuild.targets" />
+
+</Project>

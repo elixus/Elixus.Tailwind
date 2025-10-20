@@ -1,0 +1,52 @@
+<Project>
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <WarningsAsErrors />
+        <AnalysisLevel>latest</AnalysisLevel>
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+        <Version>0.0.1-beta</Version>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <Product>Elixus.Tailwind</Product>
+        <Company>Elixus</Company>
+        <Copyright>Copyright © 2025 Wannes Gennar</Copyright>
+        <Description>Automatically install and invoke TailwindCSS builds in your .NET projects.</Description>
+        <PackageProjectUrl>https://github.com/elixus/Elixus.Tailwind</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/elixus/Elixus.Tailwind</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <PackageTags>msbuild;tailwind;blazor;css;frontend;style</PackageTags>
+        <Authors>Wannes Gennar</Authors>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(IsPackable)' == 'true'">
+        <None Include="$(MSBuildThisFileDirectory)\README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
+    <!-- Automatically expose internals to test projects -->
+    <ItemGroup Condition="!$(MSBuildProjectName.EndsWith('.Tests'))">
+        <InternalsVisibleTo Include="$(MSBuildProjectName).Tests" />
+    </ItemGroup>
+
+</Project>

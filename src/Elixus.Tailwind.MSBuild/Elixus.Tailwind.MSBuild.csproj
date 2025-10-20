@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <IsPackable>true</IsPackable>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Remove="Microsoft.SourceLink.GitHub"/>
+        <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.14.28" PrivateAssets="All"/>
+    </ItemGroup>
+
+    <!-- Include the task assembly and targets file in the NuGet package -->
+    <ItemGroup>
+        <None Include="build\Elixus.Tailwind.MSBuild.targets" Pack="true" PackagePath="build"/>
+    </ItemGroup>
+</Project>

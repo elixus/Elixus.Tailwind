@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples\BlazorExample\BlazorExample.csproj" />
+  </Folder>
+  <Project Path="src/Elixus.Tailwind.MSBuild/Elixus.Tailwind.MSBuild.csproj" />
+  <Project Path="src\Elixus.Tailwind\Elixus.Tailwind.csproj" />
+</Solution>

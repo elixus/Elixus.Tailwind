@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- Determine the correct path for the assembly -->
+  <PropertyGroup>
+    <!-- For NuGet package: $(MSBuildThisFileDirectory)Elixus.Tailwind.MSBuild.dll -->
+    <!-- For local development: $(MSBuildThisFileDirectory)..\bin\Debug\netstandard2.0\Elixus.Tailwind.MSBuild.dll -->
+    <TailwindBlazorAssemblyPath Condition="Exists('$(MSBuildThisFileDirectory)..\bin\Debug\netstandard2.0\Elixus.Tailwind.MSBuild.dll')">$(MSBuildThisFileDirectory)..\bin\Debug\netstandard2.0\Elixus.Tailwind.MSBuild.dll</TailwindBlazorAssemblyPath>
+    <TailwindBlazorAssemblyPath Condition="'$(TailwindBlazorAssemblyPath)' == '' AND Exists('$(MSBuildThisFileDirectory)..\bin\Release\netstandard2.0\Elixus.Tailwind.MSBuild.dll')">$(MSBuildThisFileDirectory)..\bin\Release\netstandard2.0\Elixus.Tailwind.MSBuild.dll</TailwindBlazorAssemblyPath>
+    <TailwindBlazorAssemblyPath Condition="'$(TailwindBlazorAssemblyPath)' == '' AND Exists('$(MSBuildThisFileDirectory)Elixus.Tailwind.MSBuild.dll')">$(MSBuildThisFileDirectory)Elixus.Tailwind.MSBuild.dll</TailwindBlazorAssemblyPath>
+  </PropertyGroup>
+
+  <!-- Define the tasks - only if assembly path is set and exists -->
+  <UsingTask TaskName="Elixus.Tailwind.MSBuild.ProcessTailwindFileTask"
+             AssemblyFile="$(TailwindBlazorAssemblyPath)"
+             Condition="'$(TailwindBlazorAssemblyPath)' != '' AND Exists('$(TailwindBlazorAssemblyPath)')" />
+
+  <!-- Define a custom item type for files to process -->
+  <ItemGroup>
+    <AvailableItemName Include="TailwindFile" />
+  </ItemGroup>
+
+  <!-- Default properties -->
+  <PropertyGroup>
+    <TailwindVersion Condition="'$(TailwindVersion)' == ''">v4.1.14</TailwindVersion>
+    <TailwindCliDirectory Condition="'$(TailwindCliDirectory)' == ''">$(MSBuildProjectDirectory)\.tailwind</TailwindCliDirectory>
+  </PropertyGroup>
+
+  <!-- Determine platform string based on OS and architecture at evaluation time -->
+  <PropertyGroup>
+    <_TailwindPlatform Condition="$([MSBuild]::IsOSPlatform('Windows')) AND '$(Platform)' == 'ARM64'">windows-arm64</_TailwindPlatform>
+    <_TailwindPlatform Condition="$([MSBuild]::IsOSPlatform('Windows')) AND '$(_TailwindPlatform)' == ''">windows-x64</_TailwindPlatform>
+
+    <_TailwindPlatform Condition="$([MSBuild]::IsOSPlatform('Linux')) AND '$(Platform)' == 'ARM64'">linux-arm64</_TailwindPlatform>
+    <_TailwindPlatform Condition="$([MSBuild]::IsOSPlatform('Linux')) AND '$(Platform)' == 'ARM'">linux-armv7</_TailwindPlatform>
+    <_TailwindPlatform Condition="$([MSBuild]::IsOSPlatform('Linux')) AND '$(_TailwindPlatform)' == ''">linux-x64</_TailwindPlatform>
+
+    <_TailwindPlatform Condition="$([MSBuild]::IsOSPlatform('OSX')) AND $([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()) == 'Arm64'">macos-arm64</_TailwindPlatform>
+    <_TailwindPlatform Condition="$([MSBuild]::IsOSPlatform('OSX')) AND '$(_TailwindPlatform)' == ''">macos-x64</_TailwindPlatform>
+
+    <!-- CLI filename (add .exe for Windows) -->
+    <_TailwindCliFileName Condition="$([MSBuild]::IsOSPlatform('Windows'))">tailwindcss-$(_TailwindPlatform).exe</_TailwindCliFileName>
+    <_TailwindCliFileName Condition="'$(_TailwindCliFileName)' == ''">tailwindcss-$(_TailwindPlatform)</_TailwindCliFileName>
+
+    <!-- Full path to CLI -->
+    <TailwindCliPath>$(TailwindCliDirectory)\$(_TailwindCliFileName)</TailwindCliPath>
+
+    <!-- Download URL -->
+    <_TailwindDownloadUrl Condition="$([MSBuild]::IsOSPlatform('Windows'))">https://github.com/tailwindlabs/tailwindcss/releases/download/$(TailwindVersion)/tailwindcss-$(_TailwindPlatform).exe</_TailwindDownloadUrl>
+    <_TailwindDownloadUrl Condition="'$(_TailwindDownloadUrl)' == ''">https://github.com/tailwindlabs/tailwindcss/releases/download/$(TailwindVersion)/tailwindcss-$(_TailwindPlatform)</_TailwindDownloadUrl>
+  </PropertyGroup>
+
+  <!-- Target that downloads Tailwind CLI if needed -->
+  <Target Name="DownloadTailwindCli"
+          BeforeTargets="ProcessTailwindFiles"
+          Condition="!Exists('$(TailwindCliPath)')">
+
+    <MakeDir Directories="$(TailwindCliDirectory)" />
+
+    <Message Importance="High" Text="Downloading Tailwind CLI $(TailwindVersion) for $(_TailwindPlatform)..." />
+
+    <DownloadFile SourceUrl="$(_TailwindDownloadUrl)"
+                  DestinationFolder="$(TailwindCliDirectory)"
+                  DestinationFileName="$(_TailwindCliFileName)"
+                  Retries="3"
+                  RetryDelayMilliseconds="1000">
+      <Output TaskParameter="DownloadedFile" PropertyName="_DownloadedCliPath" />
+    </DownloadFile>
+
+    <Message Importance="High" Text="Successfully downloaded Tailwind CLI to: $(TailwindCliPath)" />
+
+    <!-- Make executable on Unix-like systems -->
+    <Exec Command="chmod +x &quot;$(TailwindCliPath)&quot;"
+          Condition="!$([MSBuild]::IsOSPlatform('Windows'))"
+          IgnoreExitCode="false" />
+
+  </Target>
+
+  <!-- Target that shows CLI path if it already exists -->
+  <Target Name="ShowTailwindCliPath"
+          BeforeTargets="ProcessTailwindFiles"
+          Condition="Exists('$(TailwindCliPath)')">
+
+    <Message Importance="High" Text="Tailwind CLI already exists at: $(TailwindCliPath)" />
+
+  </Target>
+
+  <!-- Target that warns when Tailwind processing is skipped -->
+  <Target Name="WarnTailwindSkipped"
+          BeforeTargets="BeforeBuild"
+          Condition="'@(TailwindFile)' != '' AND ('$(TailwindBlazorAssemblyPath)' == '' OR !Exists('$(TailwindBlazorAssemblyPath)'))">
+
+    <Warning Text="Tailwind CSS processing skipped - Elixus.Tailwind.MSBuild assembly not yet built. Run 'dotnet build' again to process CSS files." />
+
+  </Target>
+
+  <!-- Target that runs before build to process TailwindFile items -->
+  <Target Name="ProcessTailwindFiles"
+          BeforeTargets="BeforeBuild"
+          Inputs="@(TailwindFile)"
+          Outputs="%(TailwindFile.Identity).processed"
+          DependsOnTargets="DownloadTailwindCli"
+          Condition="'$(TailwindBlazorAssemblyPath)' != '' AND Exists('$(TailwindBlazorAssemblyPath)')">
+
+
+    <!-- Use item metadata OutputDir if specified, otherwise default to wwwroot -->
+    <PropertyGroup>
+      <_TailwindOutputDir>%(TailwindFile.OutputDir)</_TailwindOutputDir>
+      <_TailwindOutputDir Condition="'$(_TailwindOutputDir)' == ''">wwwroot</_TailwindOutputDir>
+    </PropertyGroup>
+
+    <ProcessTailwindFileTask InputFile="%(TailwindFile.Identity)"
+                     OutputDirectory="$(MSBuildProjectDirectory)\$(_TailwindOutputDir)"
+                     ProjectDirectory="$(MSBuildProjectDirectory)"
+                     TailwindCliPath="$(TailwindCliPath)" />
+
+  </Target>
+
+</Project>

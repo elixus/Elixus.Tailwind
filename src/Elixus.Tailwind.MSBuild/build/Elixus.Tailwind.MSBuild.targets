@@ -3,11 +3,15 @@
 
   <!-- Determine the correct path for the assembly -->
   <PropertyGroup>
-    <!-- For NuGet package: $(MSBuildThisFileDirectory)Elixus.Tailwind.MSBuild.dll -->
-    <!-- For local development: $(MSBuildThisFileDirectory)..\bin\Debug\netstandard2.0\Elixus.Tailwind.MSBuild.dll -->
+    <!-- For local development: Look in bin folders first -->
     <TailwindBlazorAssemblyPath Condition="Exists('$(MSBuildThisFileDirectory)..\bin\Debug\netstandard2.0\Elixus.Tailwind.MSBuild.dll')">$(MSBuildThisFileDirectory)..\bin\Debug\netstandard2.0\Elixus.Tailwind.MSBuild.dll</TailwindBlazorAssemblyPath>
     <TailwindBlazorAssemblyPath Condition="'$(TailwindBlazorAssemblyPath)' == '' AND Exists('$(MSBuildThisFileDirectory)..\bin\Release\netstandard2.0\Elixus.Tailwind.MSBuild.dll')">$(MSBuildThisFileDirectory)..\bin\Release\netstandard2.0\Elixus.Tailwind.MSBuild.dll</TailwindBlazorAssemblyPath>
+
+    <!-- For NuGet package: Check build folder -->
     <TailwindBlazorAssemblyPath Condition="'$(TailwindBlazorAssemblyPath)' == '' AND Exists('$(MSBuildThisFileDirectory)Elixus.Tailwind.MSBuild.dll')">$(MSBuildThisFileDirectory)Elixus.Tailwind.MSBuild.dll</TailwindBlazorAssemblyPath>
+
+    <!-- For NuGet package: Fallback to lib folder -->
+    <TailwindBlazorAssemblyPath Condition="'$(TailwindBlazorAssemblyPath)' == '' AND Exists('$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Elixus.Tailwind.MSBuild.dll')">$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Elixus.Tailwind.MSBuild.dll</TailwindBlazorAssemblyPath>
   </PropertyGroup>
 
   <!-- Define the tasks - only if assembly path is set and exists -->

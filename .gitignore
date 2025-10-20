@@ -488,3 +488,4 @@ $RECYCLE.BIN/
 
 # Generated files
 ./samples/*/wwroot/*.css
+CHANGELOG.md

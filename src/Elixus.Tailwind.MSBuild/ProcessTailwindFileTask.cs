@@ -32,6 +32,11 @@ public class ProcessTailwindFileTask : Microsoft.Build.Utilities.Task
     public string? TailwindCliPath { get; set; }
 
     /// <summary>
+    /// If true, processes the file in-place (overwrites the input file).
+    /// </summary>
+    public bool InPlace { get; set; }
+
+    /// <summary>
     /// Executes the task to process the input file.
     /// </summary>
     public override bool Execute()
@@ -70,12 +75,25 @@ public class ProcessTailwindFileTask : Microsoft.Build.Utilities.Task
             // Generate output filename: keep the same name but in output directory
             var fileName = Path.GetFileName(InputFile);
 
-            // Use OutputDirectory if specified, otherwise use the same directory as input file
-            var outputDir = string.IsNullOrEmpty(OutputDirectory)
-                ? (Path.GetDirectoryName(InputFile) ?? string.Empty)
-                : OutputDirectory;
+            // Determine output path
+            string outputPath;
+            string? tempOutputPath = null;
 
-            var outputPath = Path.Combine(outputDir, fileName);
+            if (InPlace)
+            {
+                // For in-place processing, use a temporary file first
+                tempOutputPath = Path.Combine(Path.GetTempPath(), $"{Path.GetFileNameWithoutExtension(fileName)}.{Guid.NewGuid()}{Path.GetExtension(fileName)}");
+                outputPath = tempOutputPath;
+            }
+            else
+            {
+                // Use OutputDirectory if specified, otherwise use the same directory as input file
+                var outputDir = string.IsNullOrEmpty(OutputDirectory)
+                    ? (Path.GetDirectoryName(InputFile) ?? string.Empty)
+                    : OutputDirectory;
+
+                outputPath = Path.Combine(outputDir, fileName);
+            }
 
             // Get absolute path to input file
             var absoluteInputPath = Path.IsPathRooted(InputFile)
@@ -131,7 +149,31 @@ public class ProcessTailwindFileTask : Microsoft.Build.Utilities.Task
                 return false;
             }
 
-            Log.LogMessage(MessageImportance.High, $"Generated output file: {outputPath}");
+            // If processing in-place, copy temp file back to original location
+            if (InPlace && tempOutputPath != null)
+            {
+                try
+                {
+                    File.Copy(tempOutputPath, absoluteInputPath, overwrite: true);
+                    File.Delete(tempOutputPath);
+                    Log.LogMessage(MessageImportance.High, $"Updated file in-place: {absoluteInputPath}");
+                }
+                catch (Exception ex)
+                {
+                    Log.LogError($"Failed to copy processed file back to original location: {ex.Message}");
+                    // Clean up temp file
+                    if (File.Exists(tempOutputPath))
+                    {
+                        try { File.Delete(tempOutputPath); } catch { }
+                    }
+                    return false;
+                }
+            }
+            else
+            {
+                Log.LogMessage(MessageImportance.High, $"Generated output file: {outputPath}");
+            }
+
             Log.LogMessage(MessageImportance.High, "File processing completed successfully");
 
             return true;

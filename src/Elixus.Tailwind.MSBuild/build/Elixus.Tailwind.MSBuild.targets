@@ -116,4 +116,20 @@
 
   </Target>
 
+  <!-- Target that processes Blazor scoped CSS files after they're generated -->
+  <Target Name="ProcessBlazorScopedCssFiles"
+          AfterTargets="_ProcessScopedCssFiles"
+          DependsOnTargets="DownloadTailwindCli"
+          Condition="'$(TailwindBlazorAssemblyPath)' != '' AND Exists('$(TailwindBlazorAssemblyPath)') AND '@(_ScopedCss)' != ''">
+
+    <Message Importance="High" Text="Processing Blazor scoped CSS files with Tailwind..." />
+
+    <!-- Process each generated scoped CSS file in-place -->
+    <ProcessTailwindFileTask InputFile="%(_ScopedCss.OutputFile)"
+                     ProjectDirectory="$(MSBuildProjectDirectory)"
+                     TailwindCliPath="$(TailwindCliPath)"
+                     InPlace="true" />
+
+  </Target>
+
 </Project>

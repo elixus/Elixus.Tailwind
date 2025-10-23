@@ -61,7 +61,7 @@ public class ProcessTailwindFileTask : Microsoft.Build.Utilities.Task
 
         Log.LogMessage(MessageImportance.Normal, $"Processing file: {InputFile}");
         Log.LogMessage(MessageImportance.Normal, $"Output directory: {OutputDirectory}");
-        Log.LogMessage(MessageImportance.Normal, $"Tailwind CLI: {TailwindCliPath}");
+        Log.LogMessage(MessageImportance.Low, $"Tailwind CLI: {TailwindCliPath}");
 
         try
         {
@@ -156,7 +156,7 @@ public class ProcessTailwindFileTask : Microsoft.Build.Utilities.Task
                 {
                     File.Copy(tempOutputPath, absoluteInputPath, overwrite: true);
                     File.Delete(tempOutputPath);
-                    Log.LogMessage(MessageImportance.High, $"Updated file in-place: {absoluteInputPath}");
+                    Log.LogMessage(MessageImportance.Low, $"Updated file in-place: {absoluteInputPath}");
                 }
                 catch (Exception ex)
                 {
@@ -171,7 +171,7 @@ public class ProcessTailwindFileTask : Microsoft.Build.Utilities.Task
             }
             else
             {
-                Log.LogMessage(MessageImportance.High, $"Generated output file: {outputPath}");
+                Log.LogMessage(MessageImportance.Normal, $"Generated output file: {outputPath}");
             }
 
             Log.LogMessage(MessageImportance.High, "File processing completed successfully");

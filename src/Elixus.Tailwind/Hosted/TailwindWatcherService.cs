@@ -30,7 +30,7 @@ public sealed class TailwindWatcherService(
 
         var binary = DetectTailwindBinary(rootFolder);
 
-        foreach (var file in options.Value.Files)
+        foreach (var file in options.Value.Inputs)
         {
             var result = StartWatchProcess(rootFolder, binary, file, cancellationToken);
 
@@ -82,11 +82,11 @@ public sealed class TailwindWatcherService(
         await using var stream = File.OpenRead(projectFile);
         var document = await XDocument.LoadAsync(stream, LoadOptions.None, cancellationToken);
 
-        foreach (var element in document.Descendants(XName.Get("TailwindFile")))
+        foreach (var element in document.Descendants(XName.Get("TailwindInput")))
         {
-            options.Value.Files.Add(new TailwindFile
+            options.Value.Inputs.Add(new TailwindInput
             {
-                Input = element.Attribute("Include")?.Value ?? throw new InvalidOperationException("TailwindFile must have an Include attribute"),
+                Input = element.Attribute("Include")?.Value ?? throw new InvalidOperationException("TailwindInput must have an Include attribute"),
                 Output = element.Attribute("Output")?.Value
             });
         }
@@ -122,14 +122,14 @@ public sealed class TailwindWatcherService(
     }
 
     private (Process, CancellationTokenRegistration)? StartWatchProcess(string rootFolder, string binary,
-        TailwindFile file,
+        TailwindInput input,
         CancellationToken cancellationToken)
     {
-        var output = file.Output ?? Path.Combine(rootFolder, "wwwroot", Path.GetFileName(file.Input));
+        var output = input.Output ?? Path.Combine(rootFolder, "wwwroot", Path.GetFileName(input.Input));
         var startInfo = new ProcessStartInfo
         {
             FileName = binary,
-            Arguments = $"--input \"{file.Input}\" --output \"{output}\" --watch",
+            Arguments = $"--input \"{input.Input}\" --output \"{output}\" --watch",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -143,7 +143,7 @@ public sealed class TailwindWatcherService(
         {
             if (!string.IsNullOrWhiteSpace(args.Data))
             {
-                logger.LogInformation("[Tailwind][{InputFile}] {Message}", file.Input, args.Data);
+                logger.LogInformation("[Tailwind][{InputFile}] {Message}", input.Input, args.Data);
             }
         };
 
@@ -151,7 +151,7 @@ public sealed class TailwindWatcherService(
         {
             if (!string.IsNullOrWhiteSpace(args.Data))
             {
-                logger.LogError("[Tailwind][{InputFile}] {Message}", file.Input, args.Data);
+                logger.LogError("[Tailwind][{InputFile}] {Message}", input.Input, args.Data);
             }
         };
 
@@ -162,13 +162,13 @@ public sealed class TailwindWatcherService(
             process.BeginErrorReadLine();
             var registration = cancellationToken.Register(() => process.Kill(entireProcessTree: true));
 
-            logger.LogInformation("Started watching: {InputFile} -> {OutputFile}", file.Input, output);
+            logger.LogInformation("Started watching: {InputFile} -> {OutputFile}", input.Input, output);
 
             return (process, registration);
         }
         catch (Exception exception)
         {
-            logger.LogError(exception, "Failed to start Tailwind watcher for {InputFile}", file.Input);
+            logger.LogError(exception, "Failed to start Tailwind watcher for {InputFile}", input.Input);
 
             return null;
         }

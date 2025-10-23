@@ -19,13 +19,13 @@ public sealed class TailwindWatchOptions
     /// <summary>
     /// A list of all tailwind files to be processed.
     /// </summary>
-    public List<TailwindFile> Files { get; set; } = [];
+    public List<TailwindInput> Inputs { get; set; } = [];
 }
 
 /// <summary>
 /// Represents an input/output configuration of a single file.
 /// </summary>
-public sealed class TailwindFile
+public sealed class TailwindInput
 {
     /// <summary>
     /// The source stylesheet.
